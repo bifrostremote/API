@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BifrostApi.Models
+namespace BifrostApi.BusinessLogic
 {
-    public class Context
+    public class Authentication
     {
-
+        
     }
 }
