@@ -12,21 +12,8 @@ namespace BifrostApi.Models
         public Guid Uid { get; set; }
         public string Token { get; set; }
 
-        [Column("Active")]
-        private BitArray _active { get; set; }
+        public bool Active { get; set; }
 
-        [NotMapped]
-        public bool Active
-        {
-            get
-            {
-                return _active[0];
-            }
-            set
-            {
-                _active[0] = value;
-            }
-        }
         public int CreateDate { get; set; }
         public Guid MachineId { get; set; }
 

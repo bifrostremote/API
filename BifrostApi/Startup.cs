@@ -14,6 +14,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication;
+using BifrostApi.BusinessLogic;
 
 namespace BifrostApi
 {
@@ -40,6 +43,22 @@ namespace BifrostApi
             {
                 options.UseNpgsql(Configuration.GetConnectionString("BifrostDB"));
             });
+
+            //services.AddIdentity<User, UserGroup>( options => {
+            //    options.SignIn.RequireConfirmedAccount = false;
+            //}).AddEntityFrameworkStores<bifrostContext>();
+
+            services.AddDistributedMemoryCache();
+
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(20);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+                options.Cookie.Name = "Bifrost.Session";
+            });
+            
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -56,8 +75,11 @@ namespace BifrostApi
 
             app.UseRouting();
 
-            app.UseAuthorization();
             app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.UseSession();
+            app.UseMiddleware<PermissionMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
