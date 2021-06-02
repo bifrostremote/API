@@ -34,8 +34,14 @@ namespace BifrostApi.Session
 
         public static void SaveSession(Session session, ISession controllerSession)
         {
+            var jsonSettings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+
             // HACK: Avoid using primitive types to save session data.
-            var sessionData = JsonConvert.SerializeObject(session);
+            var sessionData = JsonConvert.SerializeObject(session, jsonSettings);
 
             controllerSession.SetString("sessionData", sessionData);
         }

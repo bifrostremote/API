@@ -17,7 +17,7 @@ namespace BifrostApi.Models
         public Guid Uid { get; set; }
         public string Name { get; set; }
         public string Ip { get; set; }
-        public Guid UserId { get; set; }
+        public Guid UserUid { get; set; }
         public int LastOnline { get; set; }
 
      

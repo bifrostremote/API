@@ -18,7 +18,7 @@ namespace BifrostApi.Models
 
         public Guid Uid { get; set; }
         public string Name { get; set; }
-        public Guid? Parent { get; set; }
+        public Guid? ParentUid { get; set; }
         public bool Deleted { get; set; }
         public virtual UserGroup ParentNavigation { get; set; }
         public virtual ICollection<UserGroup> InverseParentNavigation { get; set; }
