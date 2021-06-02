@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BifrostApi.Session;
+using Microsoft.EntityFrameworkCore;
 
 namespace BifrostApi.BusinessLogic
 {
@@ -29,34 +30,39 @@ namespace BifrostApi.BusinessLogic
             // Get information about endpoint route.
             var endpoint = httpContext.Features.Get<IEndpointFeature>()?.Endpoint;
 
-            // Query metadata for permission annotations if any.
-            var requestMetadata = endpoint?.Metadata.GetMetadata<RequiredPermissionAttribute>();
-            var test = endpoint?.Metadata.Where(x => x.GetType() == typeof(RequiredPermissionAttribute)).ToList();
+            // Query endpoint metadata for permission annotations if any.
+            // cast the found metadata to the correct type.
+            List<RequiredPermissionAttribute> requestMetadata = endpoint?.Metadata.Where(x => x.GetType() == typeof(RequiredPermissionAttribute))
+                .Cast<RequiredPermissionAttribute>().ToList();
 
-            if (requestMetadata != null)
+            if (requestMetadata != null && requestMetadata.Count != 0)
             {
-                var session = SessionHelper.GetCurrentSession(httpContext.Session);
+                var session = SessionHelper.GetCurrentSession(httpContext.Session);     
 
+                // Check if session is initialized and session is authenticated
                 if (session != null && SessionHelper.IsSessionAuthenticated(httpContext.Session))
                 {
                     var currentUserGroup = session.CurrentUser.UserGroup;
 
-                    var currentPermissions = dbContext.GroupPermissions.Where(x => x.Group == currentUserGroup.Uid).ToList();
+                    var currentPermissions = dbContext.GroupPermissions.Include(e => e.PermissionPropertyNavigation).Where(x => x.GroupUid == currentUserGroup.Uid).ToList();
 
-                    foreach (var permission in requestMetadata.RequiredPermission)
+                    foreach (var permission in requestMetadata)
                     {
-                        //if (currentPermissions.Where(x => x.PermissionPropertyNavigation.Name != permission) != 0)
-                        //{
+                        // Check for matching permissions to the current checking permission
+                        var matchedPermission = currentPermissions.Where(x => x.PermissionPropertyNavigation.Name == permission.RequiredPermission).Count();
 
-                        //}
+                        // if no matching permission was found, session is unauthorized and we return unauthorized response
+                        if (matchedPermission == 0)
+                        {
+                            httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            return;
+                        }
                     }
                 } else
                 {
                     httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     return;
                 }
-
-                await _next(httpContext);
             }
 
             await _next(httpContext);

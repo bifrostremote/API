@@ -15,7 +15,7 @@ namespace BifrostApi.Models
         public bool Active { get; set; }
 
         public int CreateDate { get; set; }
-        public Guid MachineId { get; set; }
+        public Guid MachineUid { get; set; }
 
         public virtual Machine Machine { get; set; }
     }

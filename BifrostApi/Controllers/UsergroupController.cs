@@ -6,9 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BifrostApi.Session;
+using Microsoft.EntityFrameworkCore;
 
 namespace BifrostApi.Controllers
 {
+    [ApiController]
     [Route("[controller]")]
     public class UsergroupController : Controller
     {
@@ -21,24 +24,35 @@ namespace BifrostApi.Controllers
         }
 
         [HttpGet]
-        [RequiredPermission("READ")]
-        [RequiredPermission("")]
-        public ActionResult Get(Guid uid)
+        public ActionResult Get(Guid uid, bool includeUsers = false)
         {
-            List<UserGroup> groups = _context.UserGroups.Where(x => x.Uid == uid).ToList();
+
+            List<UserGroup> groups;
+
+            if (includeUsers)
+                groups = _context.UserGroups.Include(e => e.Users).Where(x => x.Uid == uid).ToList();
+            else
+                groups = _context.UserGroups.Where(x => x.Uid == uid).ToList();
 
             return Ok(groups);
         }
 
+        //public ActionResult GetFromHierarchy(Guid uid)
+        //{
+        //    Session.Session session = SessionHelper.GetCurrentSession(_httpContext.Session);
+        //    UserGroup currentUserGroup = session.CurrentUser.UserGroup;
+        //    List<UserGroup> groups = _context.UserGroups.
+        //}
+
         // GET: UsergroupController/Create
         [HttpPost]
-        public ActionResult Create(string name, Guid parent)
+        public ActionResult Create(string name, Guid parentUid)
         {
             // TODO: Create Group permission
             UserGroup group = new UserGroup
             {
                 Name = name,
-                Parent = parent
+                ParentUid = parentUid
             };
 
             _context.UserGroups.Add(group);
@@ -76,6 +90,7 @@ namespace BifrostApi.Controllers
         // GET: UsergroupController/Delete/5
         [HttpDelete]
         [ValidateAntiForgeryToken]
+        [Route("Hard")]
         public ActionResult Delete(Guid uid)
         {
             List<UserGroup> groups = _context.UserGroups.Where(x => x.Uid == uid).ToList();

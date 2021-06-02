@@ -7,9 +7,13 @@ using System.Threading.Tasks;
 using BifrostApi.Models;
 using BifrostApi.BusinessLogic;
 using Microsoft.AspNetCore.Identity;
+using BifrostApi.Models.Attributes;
+using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace BifrostApi.Controllers
 {
+    [ApiController]
     [Route("[controller]")]
     public class UserController : Controller
     {
@@ -21,17 +25,14 @@ namespace BifrostApi.Controllers
             _context = context;
         }
 
-        // GET: UserController
-        public ActionResult Index()
-        {
-            return View();
-        }
-
         // GET: UserController/Create
         [HttpPost]
-        [Route("Create")]
+        [RequiredPermission("UserCreateUpdateEqual")]
+        [RequiredPermission("UserCreateUpdate")]
         public async Task<ActionResult> Create(string name, string email, string username, string unencryptedPassword, Guid usergroupUID)
         {
+            // TODO: Enforce minimum password requirements
+
             // Encrypt password for storage
             string salt = Cryptography.GenerateSalt();
             string encryptedPassword = Cryptography.HashPassword(unencryptedPassword, salt);
@@ -55,60 +56,81 @@ namespace BifrostApi.Controllers
             {
                 Name = name,
                 Email = email,
-                Username = username,
-                Password = encryptedPassword,
-                Passwordsalt = salt,
+                UserName = username,
+                PasswordHash = encryptedPassword,
+                PasswordSalt = salt,
                 UserGroup = foundgroup.FirstOrDefault()
             };
 
             _context.Users.Add(newUser);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return Ok(newUser.Uid);
         }
 
-        // GET: UserController/Edit/5'
-        [HttpPatch]
-        public ActionResult Edit()
+        [HttpGet]
+        public async Task<ActionResult> Get(Guid userUid)
         {
+            // TODO: Check if hierarchy is needed (it most likely is!)
 
-            return View();
+            var foundUsers = _context.Users.AsNoTracking().Where(x => x.Uid == userUid).ToList();
+
+            // Blank restricted data for transmitting.
+            foundUsers.ForEach(e =>
+            {
+                e.PasswordHash = null;
+                e.PasswordSalt = null;
+            });
+
+
+
+            // Hide PasswordHash names from model when transmitting, this is to obscure the data schema.
+            string securedData = JsonConvert.SerializeObject(foundUsers, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+
+            return Ok(securedData);
         }
 
-        // POST: UserController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        [HttpGet]
+        public async Task<ActionResult> search(string username)
         {
-            try
+            // TODO: Check if hierarchy is needed (it most likely is!)
+
+            // SQL "LIKE" EQUIVALENT
+            var foundUsers = _context.Users.AsNoTracking().Where(x => x.UserName.Contains(username)).ToList();
+
+            if (foundUsers.Count == 0)
+                return BadRequest("No users found");
+
+            // Blank restricted data for transmitting.
+            foundUsers.ForEach(e =>
             {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+                e.PasswordHash = null;
+                e.PasswordSalt = null;
+            });
+
+            // Hide PasswordHash names from model when transmitting, this is to obscure the data schema.
+            string securedData = JsonConvert.SerializeObject(foundUsers, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+            return Ok(securedData);
         }
 
-        // GET: UserController/Delete/5
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> Delete(Guid userUid)
         {
-            return View();
-        }
+            var foundUsers = _context.Users.Where(x => x.Uid == userUid).ToList();
 
-        // POST: UserController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            if (foundUsers.Count == 0)
+                return BadRequest("No users found");
+
+            if (foundUsers.Count > 1)
+                return BadRequest("Multiple users found");
+
+            var founduser = foundUsers.FirstOrDefault();
+
+            _context.Users.Remove(founduser);
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }

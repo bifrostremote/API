@@ -45,22 +45,22 @@ namespace BifrostApi.Models
 
                 entity.ToTable("group_permissions");
 
-                entity.HasIndex(e => new { e.Group, e.PermissionProperty }, "group_permissions_role_permission_property_key")
+                entity.HasIndex(e => new { e.GroupUid, e.PermissionPropertyUid }, "group_permissions_role_permission_property_key")
                     .IsUnique();
 
-                entity.Property(e => e.Group).HasColumnName("group");
+                entity.Property(e => e.GroupUid).HasColumnName("group");
 
-                entity.Property(e => e.PermissionProperty).HasColumnName("permission_property");
+                entity.Property(e => e.PermissionPropertyUid).HasColumnName("permission_property");
 
                 entity.HasOne(d => d.GroupNavigation)
                     .WithMany()
-                    .HasForeignKey(d => d.Group)
+                    .HasForeignKey(d => d.GroupUid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("group_permissions_role_fkey");
 
                 entity.HasOne(d => d.PermissionPropertyNavigation)
                     .WithMany()
-                    .HasForeignKey(d => d.PermissionProperty)
+                    .HasForeignKey(d => d.PermissionPropertyUid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("group_permissions_permission_property_fkey");
             });
@@ -94,15 +94,15 @@ namespace BifrostApi.Models
                 entity.Property(e => e.LastOnline).HasColumnName("last_online");
 
                 entity.Property(e => e.Name)
-                    .IsRequired()
+                    .IsRequired() 
                     .HasMaxLength(255)
                     .HasColumnName("name");
 
-                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.UserUid).HasColumnName("user_id");
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Machines)
-                    .HasForeignKey(d => d.UserId)
+                    .HasForeignKey(d => d.UserUid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("machines_user_id_fkey");
             });
@@ -130,7 +130,7 @@ namespace BifrostApi.Models
 
                 entity.Property(e => e.CreateDate).HasColumnName("create_date");
 
-                entity.Property(e => e.MachineId).HasColumnName("machine_id");
+                entity.Property(e => e.MachineUid).HasColumnName("machine_id");
 
                 entity.Property(e => e.Token)
                     .IsRequired()
@@ -139,7 +139,7 @@ namespace BifrostApi.Models
 
                 entity.HasOne(d => d.Machine)
                     .WithMany(p => p.MachineTokens)
-                    .HasForeignKey(d => d.MachineId)
+                    .HasForeignKey(d => d.MachineUid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("machine_tokens_machine_id_fkey");
             });
@@ -168,6 +168,17 @@ namespace BifrostApi.Models
                     .HasColumnName("name");
             });
 
+            //modelBuilder.Entity<PasswordKey>(entity =>
+            //{
+            //    entity.HasKey(e => e.Uid)
+            //    .HasName("users_pkey");
+            //    entity.Property(e => e.Uid)
+            //        .HasColumnName("uid")
+            //        .HasDefaultValueSql("uuid_generate_v4()");
+            //    entity.HasOne(e => e.UserNavigation).WithOne(o => o.PasswordKey).HasForeignKey<User>(e => e.Uid);
+            //    entity.ToTable("users");
+            //});
+
             modelBuilder.Entity<User>(entity =>
             {
                 entity.HasKey(e => e.Uid)
@@ -175,7 +186,7 @@ namespace BifrostApi.Models
 
                 entity.ToTable("users");
 
-                entity.HasIndex(e => e.Username, "users_username_key")
+                entity.HasIndex(e => e.UserName, "users_username_key")
                     .IsUnique();
 
                 entity.Property(e => e.Uid)
@@ -199,29 +210,34 @@ namespace BifrostApi.Models
                     .HasMaxLength(255)
                     .HasColumnName("name");
 
-                entity.Property(e => e.Password)
+                //entity.HasOne(e => e.PasswordKey).WithOne(o => o.UserNavigation).HasForeignKey<User>(e => e.Uid);
+
+                entity.Property(e => e.PasswordHash)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasColumnName("password");
 
-                entity.Property(e => e.Passwordsalt)
+                entity.Property(e => e.PasswordSalt)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasColumnName("passwordsalt");
 
-                entity.Property(e => e.UserGroupId).HasColumnName("user_group_id");
+                entity.Property(e => e.UserGroupUid).HasColumnName("user_group_id");
 
-                entity.Property(e => e.Username)
+                entity.Property(e => e.UserName)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasColumnName("username");
 
                 entity.HasOne(d => d.UserGroup)
                     .WithMany(p => p.Users)
-                    .HasForeignKey(d => d.UserGroupId)
+                    .HasForeignKey(d => d.UserGroupUid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("users_user_group_id_fkey");
             });
+
+            //modelBuilder.Entity<User>().Ignore(e => e.Password);
+            //modelBuilder.Entity<User>().Ignore(e => e.Passwordsalt);
 
             modelBuilder.Entity<UserGroup>(entity =>
             {
@@ -249,11 +265,11 @@ namespace BifrostApi.Models
                     .HasMaxLength(255)
                     .HasColumnName("name");
 
-                entity.Property(e => e.Parent).HasColumnName("parent");
+                entity.Property(e => e.ParentUid).HasColumnName("parent");
 
                 entity.HasOne(d => d.ParentNavigation)
                     .WithMany(p => p.InverseParentNavigation)
-                    .HasForeignKey(d => d.Parent)
+                    .HasForeignKey(d => d.ParentUid)
                     .HasConstraintName("user_group_parent_fkey");
             });
 

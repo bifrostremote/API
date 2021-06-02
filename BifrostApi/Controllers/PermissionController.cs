@@ -4,86 +4,169 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BifrostApi.Models;
 
 namespace BifrostApi.Controllers
 {
+    [ApiController]
     public class PermissionController : Controller
     {
-        // GET: Permission
-        public ActionResult Index()
+        // Be aware there are two routes in this controller,
+        // one is for generating permissions in the database.
+        // The other one is for adding permissions to usergroups
+
+        private readonly bifrostContext _context;
+
+        public PermissionController(bifrostContext context)
         {
-            return View();
+            _context = context;
         }
 
-        // GET: Permission/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
-
-        // GET: Permission/Create
-        public ActionResult Create()
-        {
-            
-
-            return View();
-        }
-
-        // POST: Permission/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        [Route("Property")]
+        public async Task<ActionResult> PropertyCreate(string name)
         {
-            try
+            // TODO: THIS REQUIRES HIGH PRIVILEDGES TO ADD (SUPERUSER)
+
+            PermissionProperty property = new PermissionProperty
             {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+                Name = name,
+                Deleted = false
+            };
+
+            int existingproperties = _context.PermissionProperties.Where(x => x.Name == name).Count();
+
+            if (existingproperties > 0)
+                return BadRequest("Permission already exists");
+
+            _context.PermissionProperties.Add(property);
+            await _context.SaveChangesAsync();
+
+            return Ok(property);
         }
 
-        // GET: Permission/Edit/5
-        public ActionResult Edit(int id)
+        [HttpGet]
+        [Route("Property")]
+        public ActionResult PropertyGet(string name)
         {
-            return View();
+            // TODO: Test if an empty response returns an empty list;
+
+            List<PermissionProperty> properties = _context.PermissionProperties.Where(x => x.Name == name).ToList();
+
+            return Ok(properties);
         }
 
-        // POST: Permission/Edit/5
-        [HttpPost]
+        [HttpDelete]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        [Route("Property")]
+        public async Task<ActionResult> PropertyDelete(string name)
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            // TODO: Permissions to permanently delete permissions (Superuser)
+
+            var properties = _context.PermissionProperties.Where(x => x.Name == name);
+
+            _context.PermissionProperties.RemoveRange(properties);
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
 
-        // GET: Permission/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: Permission/Delete/5
-        [HttpPost]
+        [HttpPatch]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        [Route("Property")]
+        public async Task<ActionResult> PropertyPatch(Guid uid, string name)
         {
-            try
+            List<PermissionProperty> properties = _context.PermissionProperties.Where(x => x.Name == name).ToList();
+
+            if (properties.Count == 0)
+                return BadRequest("No permission found");
+
+            if (properties.Count > 1)
+                return BadRequest("multiple entries found");
+
+            PermissionProperty property = properties.FirstOrDefault();
+            property.Name = name;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(property);
+        }
+
+        [HttpGet]
+        [Route("Group")]
+        public ActionResult GroupGet(Guid groupUid, string name)
+        {
+            List<GroupPermission> permissions = _context.GroupPermissions.Where(x => x.GroupUid == groupUid).ToList();
+
+            // TODO: Check if an empty list is returned in response
+
+            // early exit when nothing was found
+            if (permissions.Count == 0)
+                return Ok();
+
+            List<GroupPermission> foundpermission = permissions.Where(x => x.GroupNavigation.Name == name).ToList();
+
+            if (foundpermission.Count == 0)
             {
-                return RedirectToAction(nameof(Index));
+                return BadRequest("Group does not have permission");
             }
-            catch
+
+            return Ok(foundpermission.FirstOrDefault());
+        }
+
+        [HttpGet]
+        [Route("Group/CheckPermission")]
+        public ActionResult CheckPermission(Guid groupUid, string name)
+        {
+            List<GroupPermission> permissions = _context.GroupPermissions.Where(x => x.GroupUid == groupUid).ToList();
+
+            // TODO: Check if an empty list is returned in response
+
+            // early exit when nothing was found
+            if (permissions.Count == 0)
+                return Ok(false);
+
+            List<GroupPermission> foundpermission = permissions.Where(x => x.GroupNavigation.Name == name).ToList();
+
+            if (foundpermission.Count == 0)
             {
-                return View();
+                return Ok(false);
             }
+
+            return Ok(true);
+        }
+
+        [HttpPost]
+        [Route("Group")]
+        public async Task<ActionResult> GroupCreate(Guid groupUid, Guid permissionUid)
+        {
+            // TODO: ONLY GIVE PERMISSIONS THAT ARE NON RESTRICTED AND IS FOR A GROUP LOWER IN THE HIERARCHY
+
+            GroupPermission permission = new GroupPermission
+            {
+                GroupUid = groupUid,
+                PermissionPropertyUid = permissionUid
+            };
+
+            _context.GroupPermissions.Add(permission);
+            await _context.SaveChangesAsync();
+
+            return Ok(permission);
+        }
+
+        [HttpDelete]
+        [Route("Group")]
+        public async Task<ActionResult> GroupDelete(Guid groupUid, Guid permissionUid)
+        {
+            // TODO: HIERARCHY CHECK, 
+
+            List<GroupPermission> permission = _context.GroupPermissions.Where(x => x.GroupUid == groupUid && x.PermissionPropertyUid == permissionUid).ToList();
+
+            _context.GroupPermissions.RemoveRange(permission);
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }

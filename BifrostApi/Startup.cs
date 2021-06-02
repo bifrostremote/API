@@ -17,6 +17,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication;
 using BifrostApi.BusinessLogic;
+using Newtonsoft.Json;
 
 namespace BifrostApi
 {
@@ -33,7 +34,11 @@ namespace BifrostApi
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+            });
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "BifrostApi", Version = "v1" });
@@ -41,7 +46,35 @@ namespace BifrostApi
 
             services.AddDbContext<bifrostContext>(options =>
             {
+                options.EnableSensitiveDataLogging();
                 options.UseNpgsql(Configuration.GetConnectionString("BifrostDB"));
+            });
+
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredLength = 6;
+                options.Password.RequiredUniqueChars = 1;
+
+#if DEBUG
+                // when running in debug mode we increase the lockout limit.
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 30;
+#else
+
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+#endif
+
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+
+                // when developing this is fine, but we should investigate the security concerns of allowing the same email being used multiple times.
+                options.User.RequireUniqueEmail = false;
             });
 
             //services.AddIdentity<User, UserGroup>( options => {
@@ -57,7 +90,7 @@ namespace BifrostApi
                 options.Cookie.IsEssential = true;
                 options.Cookie.Name = "Bifrost.Session";
             });
-            
+
 
         }
 
