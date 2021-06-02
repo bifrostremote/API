@@ -1,17 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BifrostApi.BusinessLogic;
+using BifrostApi.Models;
+using BifrostApi.Session;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BifrostApi.Models;
 
 namespace BifrostApi.Controllers
 {
     public class Tokenpar
     {
         public int SecurityLevel { get; set; }
-        public Guid MachineId { get; set; }
+        public Guid MachineUid { get; set; }
     }
 
     [ApiController]
@@ -31,11 +33,6 @@ namespace BifrostApi.Controllers
         {
             var random = new Random();
             return words[random.Next(words.Length)];
-        }
-
-        public ActionResult Index()
-        {
-            return NoContent();
         }
 
         // POST: Token/GenerateToken
@@ -82,11 +79,10 @@ namespace BifrostApi.Controllers
             return Ok();
         }
 
-        // POST: Token/DeleteToken
-        [HttpPost]
-        [Route("DeleteToken")]
+        // Delete: Token
+        [HttpDelete]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteToken(){
+        public ActionResult DeleteToken(Guid tokenUid){
             return Ok();
         }
     }
