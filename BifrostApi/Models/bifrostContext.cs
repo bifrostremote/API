@@ -1,4 +1,5 @@
 ﻿using System;
+using BifrostApi.Models.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -82,7 +83,8 @@ namespace BifrostApi.Models
                     .IsRequired()
                     .HasColumnType("bit(1)")
                     .HasColumnName("deleted")
-                    .HasDefaultValueSql("(0)::bit(1)");
+                    .HasDefaultValueSql("(0)::bit(1)")
+                    .HasConversion(ConverterProvider.GetBoolToBitArrayConverter());
 
                 entity.Property(e => e.Ip)
                     .IsRequired()
@@ -123,7 +125,8 @@ namespace BifrostApi.Models
                     .IsRequired()
                     .HasColumnType("bit(1)")
                     .HasColumnName("active")
-                    .HasDefaultValueSql("(0)::bit(1)");
+                    .HasDefaultValueSql("(0)::bit(1)")
+                    .HasConversion(ConverterProvider.GetBoolToBitArrayConverter());
 
                 entity.Property(e => e.CreateDate).HasColumnName("create_date");
 
@@ -156,7 +159,8 @@ namespace BifrostApi.Models
                     .IsRequired()
                     .HasColumnType("bit(1)")
                     .HasColumnName("deleted")
-                    .HasDefaultValueSql("(0)::bit(1)");
+                    .HasDefaultValueSql("(0)::bit(1)")
+                    .HasConversion(ConverterProvider.GetBoolToBitArrayConverter());
 
                 entity.Property(e => e.Name)
                     .IsRequired()
@@ -182,7 +186,8 @@ namespace BifrostApi.Models
                     .IsRequired()
                     .HasColumnType("bit(1)")
                     .HasColumnName("deleted")
-                    .HasDefaultValueSql("(0)::bit(1)");
+                    .HasDefaultValueSql("(0)::bit(1)")
+                    .HasConversion(ConverterProvider.GetBoolToBitArrayConverter());
 
                 entity.Property(e => e.Email)
                     .IsRequired()
@@ -236,7 +241,8 @@ namespace BifrostApi.Models
                     .IsRequired()
                     .HasColumnType("bit(1)")
                     .HasColumnName("deleted")
-                    .HasDefaultValueSql("(0)::bit(1)");
+                    .HasDefaultValueSql("(0)::bit(1)")
+                    .HasConversion(ConverterProvider.GetBoolToBitArrayConverter());
 
                 entity.Property(e => e.Name)
                     .IsRequired()
