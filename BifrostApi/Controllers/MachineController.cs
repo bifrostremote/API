@@ -40,11 +40,11 @@ namespace BifrostApi.Controllers
             Machine machine = _context.Machines.Where(x => x.Uid == machineUid).FirstOrDefault();
 
             if(machine.Uid == null){
-                return Ok("Error");
+                return BadRequest("Error");
             }
 
             if(machine.Deleted == false){
-                return Ok("Error");
+                return BadRequest("Error");
             }
 
             machine = machineOut;
@@ -52,7 +52,7 @@ namespace BifrostApi.Controllers
 
             machine = _context.Machines.Where(x => x.Uid == machineUid).FirstOrDefault();
             if(machine != machineOut){
-                return Ok("Error");
+                return BadRequest("Error");
             }
             return Ok("Success");
         }
@@ -93,7 +93,7 @@ namespace BifrostApi.Controllers
                 return Ok("Error");
             }
 
-            _context.MachineTokens.RemoveRange(_context.MachineTokens.Where(x => x.machineUid == machineUid));
+            _context.MachineTokens.RemoveRange(_context.MachineTokens.Where(x => x.MachineUid == machineUid));
             _context.Machines.Remove(machine);
             _context.SaveChanges();
 
