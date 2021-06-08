@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Data.Common;
+using System.Data.SqlClient;
 using BifrostApi.Models.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -29,8 +31,17 @@ namespace BifrostApi.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseNpgsql("Server=sql.bifrostremote.com;Port=5432;Database=bifrost;User Id=bifrost;Password=T5h0eKX11V8E;");
+                var builder = new SqlConnectionStringBuilder
+                {
+                    DataSource = $"{Environment.GetEnvironmentVariable("DB_URL")},{Environment.GetEnvironmentVariable("Db_PORT")}",
+                    InitialCatalog = Environment.GetEnvironmentVariable("DB_DefaultDatabase"),
+                    UserID = Environment.GetEnvironmentVariable("DB_UserId"),
+                    Password = Environment.GetEnvironmentVariable("DB_Password"),
+                };
+
+                string connectionString = builder.ConnectionString;
+
+                optionsBuilder.UseNpgsql(connectionString);
             }
         }
 
@@ -146,12 +157,12 @@ namespace BifrostApi.Models
 
             modelBuilder.Entity<PermissionProperty>(entity =>
             {
-                entity.HasKey(e => e.Uid)
+                entity.HasKey(e => e.Id)
                     .HasName("permission_properties_pkey");
 
                 entity.ToTable("permission_properties");
 
-                entity.Property(e => e.Uid)
+                entity.Property(e => e.Id)
                     .HasColumnName("uid")
                     .HasDefaultValueSql("uuid_generate_v4()");
 
@@ -181,7 +192,7 @@ namespace BifrostApi.Models
 
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasKey(e => e.Uid)
+                entity.HasKey(e => e.Id)
                     .HasName("users_pkey");
 
                 entity.ToTable("users");
@@ -189,7 +200,7 @@ namespace BifrostApi.Models
                 entity.HasIndex(e => e.UserName, "users_username_key")
                     .IsUnique();
 
-                entity.Property(e => e.Uid)
+                entity.Property(e => e.Id)
                     .HasColumnName("uid")
                     .HasDefaultValueSql("uuid_generate_v4()");
 

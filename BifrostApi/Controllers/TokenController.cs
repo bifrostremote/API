@@ -65,7 +65,7 @@ namespace BifrostApi.Controllers
             {
                 Token = string.Join('-', tokenArr),
                 CreateDate = secondsSinceEpoch,
-                MachineId = tokenpar.MachineId
+                MachineUid = tokenpar.MachineUid
             };
 
             return Ok();

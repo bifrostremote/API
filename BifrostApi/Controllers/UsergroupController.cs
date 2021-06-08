@@ -24,6 +24,7 @@ namespace BifrostApi.Controllers
         }
 
         [HttpGet]
+        [RequireHierarchy("uid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public ActionResult Get(Guid uid, bool includeUsers = false)
         {
 
@@ -46,6 +47,7 @@ namespace BifrostApi.Controllers
 
         // GET: UsergroupController/Create
         [HttpPost]
+        [RequireHierarchy("parentUid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public ActionResult Create(string name, Guid parentUid)
         {
             // TODO: Create Group permission
@@ -64,6 +66,7 @@ namespace BifrostApi.Controllers
         // POST: UsergroupController/Edit/5
         [HttpPatch]
         [ValidateAntiForgeryToken]
+        [RequireHierarchy("uid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public ActionResult Edit(Guid uid, UserGroup patchedGroup)
         {
             List<UserGroup> groups = _context.UserGroups.Where(x => x.Uid == uid).ToList();
@@ -91,6 +94,7 @@ namespace BifrostApi.Controllers
         [HttpDelete]
         [ValidateAntiForgeryToken]
         [Route("Hard")]
+        [RequireHierarchy("uid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public ActionResult Delete(Guid uid)
         {
             List<UserGroup> groups = _context.UserGroups.Where(x => x.Uid == uid).ToList();

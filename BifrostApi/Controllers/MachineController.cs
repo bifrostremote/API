@@ -18,10 +18,6 @@ namespace BifrostApi.Controllers
         {
             _context = context;
         }
-        public IActionResult Index()
-        {
-            return View();
-        }
 
         [HttpGet]
         public ActionResult GetMachine(Guid machineUid){

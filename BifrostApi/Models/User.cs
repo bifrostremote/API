@@ -9,14 +9,14 @@ using Microsoft.AspNet.Identity;
 
 namespace BifrostApi.Models
 {
-    public partial class User
+    public partial class User : IUser<Guid>
     {
         public User()
         {
             Machines = new HashSet<Machine>();
         }
 
-        public Guid Uid { get; set; }
+        public Guid Id { get; set; }
         public string UserName { get; set; }
         //public PasswordKey PasswordKey { get; set; }
         public string PasswordHash { get; set; }
@@ -27,5 +27,6 @@ namespace BifrostApi.Models
         public bool Deleted { get; set; }
         public virtual UserGroup UserGroup { get; set; }
         public virtual ICollection<Machine> Machines { get; set; }
+
     }
 }

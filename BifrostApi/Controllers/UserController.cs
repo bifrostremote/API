@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using BifrostApi.Models.Attributes;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
+using BifrostApi.Models.DTO;
 
 namespace BifrostApi.Controllers
 {
@@ -19,26 +20,36 @@ namespace BifrostApi.Controllers
     {
 
         private readonly bifrostContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public UserController(bifrostContext context)
+        public UserController(bifrostContext context, UserManager<User> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: UserController/Create
         [HttpPost]
         [RequiredPermission("UserCreateUpdateEqual")]
         [RequiredPermission("UserCreateUpdate")]
-        public async Task<ActionResult> Create(string name, string email, string username, string unencryptedPassword, Guid usergroupUID)
+        [RequireHierarchy("userGroupUid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
+        public async Task<ActionResult> Create(Guid userGroupUid, UserCreateDTO user)
         {
-            // TODO: Enforce minimum password requirements
+            PasswordValidator<User> validator = new Microsoft.AspNetCore.Identity.PasswordValidator<User>();
+
+            IdentityResult result = await validator.ValidateAsync(_userManager, null, user.unencryptedPassword);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
 
             // Encrypt password for storage
             string salt = Cryptography.GenerateSalt();
-            string encryptedPassword = Cryptography.HashPassword(unencryptedPassword, salt);
+            string encryptedPassword = Cryptography.HashPassword(user.unencryptedPassword, salt);
 
 
-            List<UserGroup> foundgroup = _context.UserGroups.Where(x => x.Uid == usergroupUID).ToList();
+            List<UserGroup> foundgroup = _context.UserGroups.Where(x => x.Uid == userGroupUid).ToList();
 
             if (foundgroup.Count > 1)
             {
@@ -54,9 +65,9 @@ namespace BifrostApi.Controllers
             // or should we give the user the ability to choose their group disregarding all security best practices
             User newUser = new User
             {
-                Name = name,
-                Email = email,
-                UserName = username,
+                Name = user.name,
+                Email = user.email,
+                UserName = user.username,
                 PasswordHash = encryptedPassword,
                 PasswordSalt = salt,
                 UserGroup = foundgroup.FirstOrDefault()
@@ -65,15 +76,16 @@ namespace BifrostApi.Controllers
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            return Ok(newUser.Uid);
+            return Ok(newUser.Id);
         }
 
-        [HttpGet]
+        [HttpGet("getFromUid")]
+        [RequireHierarchy("userUid", false, RequireHierarchyAttribute.HierarchySearchType.User)]
+        [QueryRouteSelector("username", false)]
+        [QueryRouteSelector("userUid", true)]
         public async Task<ActionResult> Get(Guid userUid)
         {
-            // TODO: Check if hierarchy is needed (it most likely is!)
-
-            var foundUsers = _context.Users.AsNoTracking().Where(x => x.Uid == userUid).ToList();
+            var foundUsers = _context.Users.AsNoTracking().Where(x => x.Id == userUid).ToList();
 
             // Blank restricted data for transmitting.
             foundUsers.ForEach(e =>
@@ -91,10 +103,14 @@ namespace BifrostApi.Controllers
             return Ok(securedData);
         }
 
-        [HttpGet]
-        public async Task<ActionResult> search(string username)
+
+        // TODO: make string searches for username in hierarchychecks
+        [HttpGet("getFromUsername")]
+        [QueryRouteSelector("username", true)]
+        [QueryRouteSelector("userUid", false)]
+        [ApiExplorerSettings(IgnoreApi = true)] // Hide search from swagger to avoid ambiguous  
+        public async Task<ActionResult> Search(string username)
         {
-            // TODO: Check if hierarchy is needed (it most likely is!)
 
             // SQL "LIKE" EQUIVALENT
             var foundUsers = _context.Users.AsNoTracking().Where(x => x.UserName.Contains(username)).ToList();
@@ -115,9 +131,13 @@ namespace BifrostApi.Controllers
             return Ok(securedData);
         }
 
-        public async Task<ActionResult> Delete(Guid userUid)
+        [HttpDelete]
+        [RequireHierarchy("userUid", false, RequireHierarchyAttribute.HierarchySearchType.User)]
+        [RequiredPermission("UserHardDelete")]
+        [Route("Hard")]
+        public async Task<ActionResult> HardDelete(Guid userUid)
         {
-            var foundUsers = _context.Users.Where(x => x.Uid == userUid).ToList();
+            var foundUsers = _context.Users.Where(x => x.Id == userUid).ToList();
 
             if (foundUsers.Count == 0)
                 return BadRequest("No users found");
@@ -128,6 +148,28 @@ namespace BifrostApi.Controllers
             var founduser = foundUsers.FirstOrDefault();
 
             _context.Users.Remove(founduser);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpDelete]
+        [RequireHierarchy("userUid", false, RequireHierarchyAttribute.HierarchySearchType.User)]
+        [RequiredPermission("UserSoftDelete")]
+        [Route("Soft")]
+        public async Task<ActionResult> SoftDelete(Guid userUid)
+        {
+            var foundUsers = _context.Users.Where(x => x.Id == userUid).ToList();
+
+            if (foundUsers.Count == 0)
+                return BadRequest("No users found");
+
+            if (foundUsers.Count > 1)
+                return BadRequest("Multiple users found");
+
+            var founduser = foundUsers.FirstOrDefault();
+            founduser.Deleted = true;
+            
             await _context.SaveChangesAsync();
 
             return Ok();

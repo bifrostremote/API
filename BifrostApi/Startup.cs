@@ -49,6 +49,7 @@ namespace BifrostApi
                 options.EnableSensitiveDataLogging();
                 options.UseNpgsql(Configuration.GetConnectionString("BifrostDB"));
             });
+            
 
             services.Configure<IdentityOptions>(options =>
             {
@@ -66,9 +67,9 @@ namespace BifrostApi
                 options.Lockout.MaxFailedAccessAttempts = 30;
 #else
 
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                options.Lockout.AllowedForNewUsers = true;
-                options.Lockout.MaxFailedAccessAttempts = 5;
+                            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                            options.Lockout.AllowedForNewUsers = true;
+                            options.Lockout.MaxFailedAccessAttempts = 5;
 #endif
 
                 options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
@@ -77,9 +78,12 @@ namespace BifrostApi
                 options.User.RequireUniqueEmail = false;
             });
 
-            //services.AddIdentity<User, UserGroup>( options => {
-            //    options.SignIn.RequireConfirmedAccount = false;
-            //}).AddEntityFrameworkStores<bifrostContext>();
+            services.AddIdentity<User, PermissionProperty>()
+                .AddDefaultTokenProviders();
+
+            services.AddTransient<IUserStore<User>, BusinessLogic.Identity.UserStorage>();
+            services.AddTransient<IRoleStore<PermissionProperty>, BusinessLogic.Identity.RoleStore>();
+
 
             services.AddDistributedMemoryCache();
 
@@ -97,12 +101,12 @@ namespace BifrostApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
+            //if (env.IsDevelopment())
+            //{
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "BifrostApi v1"));
-            }
+            //}
 
             app.UseHttpsRedirection();
 
@@ -113,6 +117,7 @@ namespace BifrostApi
 
             app.UseSession();
             app.UseMiddleware<PermissionMiddleware>();
+            app.UseMiddleware<HierarchyMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {

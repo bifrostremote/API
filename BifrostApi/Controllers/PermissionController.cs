@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BifrostApi.Models;
+using BifrostApi.Models.Attributes;
 
 namespace BifrostApi.Controllers
 {
@@ -25,6 +26,7 @@ namespace BifrostApi.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Route("Property")]
+        [RequiredPermission("PropertyAdmin")]
         public async Task<ActionResult> PropertyCreate(string name)
         {
             // TODO: THIS REQUIRES HIGH PRIVILEDGES TO ADD (SUPERUSER)
@@ -95,6 +97,7 @@ namespace BifrostApi.Controllers
 
         [HttpGet]
         [Route("Group")]
+        [RequireHierarchy("groupUid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public ActionResult GroupGet(Guid groupUid, string name)
         {
             List<GroupPermission> permissions = _context.GroupPermissions.Where(x => x.GroupUid == groupUid).ToList();
@@ -117,6 +120,7 @@ namespace BifrostApi.Controllers
 
         [HttpGet]
         [Route("Group/CheckPermission")]
+        [RequireHierarchy("groupUid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public ActionResult CheckPermission(Guid groupUid, string name)
         {
             List<GroupPermission> permissions = _context.GroupPermissions.Where(x => x.GroupUid == groupUid).ToList();
@@ -139,6 +143,7 @@ namespace BifrostApi.Controllers
 
         [HttpPost]
         [Route("Group")]
+        [RequireHierarchy("groupUid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public async Task<ActionResult> GroupCreate(Guid groupUid, Guid permissionUid)
         {
             // TODO: ONLY GIVE PERMISSIONS THAT ARE NON RESTRICTED AND IS FOR A GROUP LOWER IN THE HIERARCHY
@@ -157,6 +162,7 @@ namespace BifrostApi.Controllers
 
         [HttpDelete]
         [Route("Group")]
+        [RequireHierarchy("groupUid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public async Task<ActionResult> GroupDelete(Guid groupUid, Guid permissionUid)
         {
             // TODO: HIERARCHY CHECK, 

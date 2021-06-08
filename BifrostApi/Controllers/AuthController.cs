@@ -1,5 +1,6 @@
 ﻿using BifrostApi.BusinessLogic;
 using BifrostApi.Models;
+using BifrostApi.Models.Attributes;
 using BifrostApi.Session;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -23,21 +24,21 @@ namespace BifrostApi.Controllers
             _context = context;
         }
 
-        // TODO: Remove INSECURE
-        [HttpGet]
-        [Route("Encrypt")]
-        public IActionResult Encrypt(string plaintext, string password)
-        {
-            return Ok(Cryptography.AESEncrypt(plaintext, password));
-        }
+        //// TODO: Remove INSECURE
+        //[HttpGet]
+        //[Route("Encrypt")]
+        //public IActionResult Encrypt(string plaintext, string password)
+        //{
+        //    return Ok(Cryptography.AESEncrypt(plaintext, password));
+        //}
 
-        // TODO: Remove INSECURE
-        [HttpGet]
-        [Route("Decrypt")]
-        public IActionResult Decrypt(string ciphertext, string password)
-        {
-            return Ok(Cryptography.AESDecrypt(ciphertext, password));
-        }
+        //// TODO: Remove INSECURE
+        //[HttpGet]
+        //[Route("Decrypt")]
+        //public IActionResult Decrypt(string ciphertext, string password)
+        //{
+        //    return Ok(Cryptography.AESDecrypt(ciphertext, password));
+        //}
 
         [HttpPost]
         [Route("Authenticate")]
