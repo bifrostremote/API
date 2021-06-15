@@ -50,7 +50,18 @@ namespace BifrostApi.Controllers
         [RequireHierarchy("parentUid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public ActionResult Create(string name, Guid parentUid)
         {
-            // TODO: Create Group permission
+            if (parentUid == Guid.Empty)
+                return BadRequest("Group requires valid parent");
+
+            if (name == "")
+                return BadRequest("Name cannot be empty");
+
+            // Check if parent exists
+            int parents = _context.UserGroups.Where(x => x.Uid == parentUid).Count();
+
+            if (parents == 0 || parents > 1)
+                return BadRequest("Invalid number of parents found for group");
+
             UserGroup group = new UserGroup
             {
                 Name = name,

@@ -34,7 +34,6 @@ namespace BifrostApi.BusinessLogic
 
             // Get information about endpoint route.
             var endpoint = httpContext.Features.Get<IEndpointFeature>()?.Endpoint;
-            var features = httpContext.Features.Get<IRouteValuesFeature>();
 
             // Query endpoint metadata for permission annotations if any.
             // cast the found metadata to the correct type.
@@ -111,8 +110,9 @@ namespace BifrostApi.BusinessLogic
         private bool SearchHierarchy(UserGroup groupToSearch, Guid targetParent, bifrostContext context, bool initialSearch = true)
         {
             // If we are running the first layer search, and the current group is the top level parent group
-            // always allow access.
-            if (initialSearch && groupToSearch.Uid == Guid.Parse(TOP_LEVEL_GROUP))
+            // always allow access. 
+            // In essence an early top level check.
+            if (initialSearch && targetParent == Guid.Parse(TOP_LEVEL_GROUP))
                 return true;
             
 

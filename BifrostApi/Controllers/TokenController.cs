@@ -7,14 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BifrostApi.Models.DTO;
 
 namespace BifrostApi.Controllers
 {
-    public class Tokenpar
-    {
-        public int SecurityLevel { get; set; }
-        public Guid MachineUid { get; set; }
-    }
+    
 
     [ApiController]
     [Route("[controller]")]
@@ -25,10 +22,12 @@ namespace BifrostApi.Controllers
             var random = new Random();
             return new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 4).Select(s => s[random.Next(s.Length)]).ToArray());
         }
+
         private static readonly string[] words = new[]
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
+
         private string GetTokenWord()
         {
             var random = new Random();
@@ -39,10 +38,10 @@ namespace BifrostApi.Controllers
         [HttpPost]
         [Route("GenerateToken")]
         [ValidateAntiForgeryToken]
-        public ActionResult GenerateToken([FromBody]Tokenpar tokenpar)
+        public ActionResult GenerateToken([FromBody]TokenPairDTO tokenPair)
         {
-            string[] token = new string[tokenpar.SecurityLevel];
-            for (int i = 0; i < tokenpar.SecurityLevel; i++)
+            string[] token = new string[tokenPair.SecurityLevel];
+            for (int i = 0; i < tokenPair.SecurityLevel; i++)
             {
                 token[i] = GetTokenBlock();
             }
@@ -53,9 +52,10 @@ namespace BifrostApi.Controllers
         [HttpPost]
         [Route("GenerateWordToken")]
         [ValidateAntiForgeryToken]
-        public ActionResult GenerateWordToken([FromBody]Tokenpar tokenpar){
-            string[] tokenArr = new string[tokenpar.SecurityLevel];
-            for (int i = 0; i < tokenpar.SecurityLevel; i++)
+        public ActionResult GenerateWordToken([FromBody]TokenPairDTO tokenPair)
+        {
+            string[] tokenArr = new string[tokenPair.SecurityLevel];
+            for (int i = 0; i < tokenPair.SecurityLevel; i++)
             {
                 tokenArr[i] = GetTokenWord();
             }
@@ -65,7 +65,7 @@ namespace BifrostApi.Controllers
             {
                 Token = string.Join('-', tokenArr),
                 CreateDate = secondsSinceEpoch,
-                MachineUid = tokenpar.MachineUid
+                MachineUid = tokenPair.MachineUid
             };
 
             return Ok();

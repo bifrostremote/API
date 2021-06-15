@@ -60,15 +60,13 @@ namespace BifrostApi
                 options.Password.RequiredLength = 6;
                 options.Password.RequiredUniqueChars = 1;
 
-#if DEBUG
-                // when running in debug mode we increase the lockout limit.
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
                 options.Lockout.AllowedForNewUsers = true;
+
+#if DEBUG
+                // when running in debug mode we increase the lockout limit.
                 options.Lockout.MaxFailedAccessAttempts = 30;
 #else
-
-                            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                            options.Lockout.AllowedForNewUsers = true;
                             options.Lockout.MaxFailedAccessAttempts = 5;
 #endif
 
@@ -81,6 +79,7 @@ namespace BifrostApi
             services.AddIdentity<User, PermissionProperty>()
                 .AddDefaultTokenProviders();
 
+            // Hook into Identity API's 
             services.AddTransient<IUserStore<User>, BusinessLogic.Identity.UserStorage>();
             services.AddTransient<IRoleStore<PermissionProperty>, BusinessLogic.Identity.RoleStore>();
 

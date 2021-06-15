@@ -1,10 +1,14 @@
 ﻿using BifrostApi.BusinessLogic;
 using BifrostApi.Models;
+using BifrostApi.Models.Attributes;
+using BifrostApi.Models.DTO;
 using BifrostApi.Session;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace BifrostApi.Controllers
@@ -20,15 +24,76 @@ namespace BifrostApi.Controllers
         }
 
         [HttpGet]
+        [QueryRouteSelector("userUid", false)]
+        [QueryRouteSelector("machineUid", true)]
         public ActionResult GetMachine(Guid machineUid){
             return Ok();
         }
 
         [HttpPost]
-        [Route("InsertMachine")]
-        public ActionResult InsertMachine([FromBody]Machine machineOut){
-            return Ok();
+        public ActionResult InsertMachine([FromBody]MachineCreateDTO machine)
+        {
+
+            if (machine.Name == "")
+                return BadRequest("name cannot be empty");
+
+            if (machine.UserUid == Guid.Empty)
+                return BadRequest("user cannot be empty");
+
+            int foundUsers = _context.Users.Where(x => x.Id == machine.UserUid).Count();
+
+            if (foundUsers > 1)
+                return BadRequest("multiple users found");
+
+            if (foundUsers == 0)
+                return BadRequest("User does not exist");
+
+            IPAddress address = null;
+            IPAddress.TryParse(machine.IPAddress, out address);
+
+            if (address == null)
+                return BadRequest("IP Address is not valid");
+
+
+            Machine inserted = new Machine
+            {
+                Name = machine.Name,
+                UserUid = machine.UserUid,
+                Deleted = false,
+                Ip = address.ToString(),
+                LastOnline = (int)DateTimeOffset.Now.ToUnixTimeSeconds()
+                
+            };
+
+            _context.Machines.Add(inserted);
+            _context.SaveChangesAsync();
+
+            return Ok(inserted.Uid);
+
         }
+
+        [HttpGet]
+        [Route("HierarchyLookup")]
+        public async Task<ActionResult> GetAllMachinesInHierarchy()
+        {
+            var session = SessionHelper.GetCurrentSession(HttpContext.Session);
+
+            var machines = _context.GetHierarchyForUser(session.CurrentUser.UserGroupUid);
+
+            return Ok(machines.ToList());
+        }
+
+        [HttpGet]
+        [RequireHierarchy("userUid", false, RequireHierarchyAttribute.HierarchySearchType.User)]
+        [QueryRouteSelector("userUid", true)]
+        [QueryRouteSelector("machineUid", false)]
+        public async Task<ActionResult> GetMachinesForUser(Guid userUid)
+        {
+            List<Machine> machines = _context.Machines.Where(x => x.UserUid == userUid).ToList();
+
+            return Ok(machines);
+        }
+
 
         [HttpPatch]
         public ActionResult UpdateMachine([FromBody]Machine machineOut){

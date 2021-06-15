@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Data.Common;
 using System.Data.SqlClient;
+using System.Linq;
 using BifrostApi.Models.Converters;
+using BifrostApi.Models.DTO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -44,6 +46,9 @@ namespace BifrostApi.Models
                 optionsBuilder.UseNpgsql(connectionString);
             }
         }
+
+        public IQueryable<MachineHierarchyDTO> GetHierarchyForUser(Guid initialParent)
+            => FromExpression(() => GetHierarchyForUser(initialParent));
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -282,6 +287,9 @@ namespace BifrostApi.Models
                     .WithMany(p => p.InverseParentNavigation)
                     .HasForeignKey(d => d.ParentUid)
                     .HasConstraintName("user_group_parent_fkey");
+
+                modelBuilder.HasDbFunction(typeof(bifrostContext).GetMethod(nameof(GetHierarchyForUser), new[] { typeof(Guid) }))
+                .HasName("GetHierarchy2");
             });
 
             OnModelCreatingPartial(modelBuilder);

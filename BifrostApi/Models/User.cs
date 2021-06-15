@@ -16,6 +16,7 @@ namespace BifrostApi.Models
             Machines = new HashSet<Machine>();
         }
 
+        // We mismatch the general schema where Guids are named uid, due to the required IUser interface requiring a ID value of T, where in our case T is a Guid
         public Guid Id { get; set; }
         public string UserName { get; set; }
         //public PasswordKey PasswordKey { get; set; }

@@ -51,7 +51,7 @@ namespace BifrostApi.BusinessLogic
                         // Check for matching permissions to the current checking permission
                         var matchedPermission = currentPermissions.Where(x => x.PermissionPropertyNavigation.Name == permission.RequiredPermission).Count();
 
-                        // if no matching permission was found, session is unauthorized and we return unauthorized response
+                        // if no matching permission was found, session is unauthorized and we return HTTP 401
                         if (matchedPermission == 0)
                         {
                             httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;

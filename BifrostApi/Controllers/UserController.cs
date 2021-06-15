@@ -79,7 +79,7 @@ namespace BifrostApi.Controllers
             return Ok(newUser.Id);
         }
 
-        [HttpGet("getFromUid")]
+        [HttpGet]
         [RequireHierarchy("userUid", false, RequireHierarchyAttribute.HierarchySearchType.User)]
         [QueryRouteSelector("username", false)]
         [QueryRouteSelector("userUid", true)]
@@ -105,7 +105,7 @@ namespace BifrostApi.Controllers
 
 
         // TODO: make string searches for username in hierarchychecks
-        [HttpGet("getFromUsername")]
+        [HttpGet]
         [QueryRouteSelector("username", true)]
         [QueryRouteSelector("userUid", false)]
         [ApiExplorerSettings(IgnoreApi = true)] // Hide search from swagger to avoid ambiguous  
