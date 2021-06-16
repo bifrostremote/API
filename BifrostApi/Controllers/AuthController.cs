@@ -66,7 +66,7 @@ namespace BifrostApi.Controllers
 
                 SessionHelper.SaveSession(currentSession, HttpContext.Session);
 
-                return Ok();
+                return Ok(user.Id);
             }
 
             return Forbid("user not authenticated");

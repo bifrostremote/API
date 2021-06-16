@@ -29,7 +29,6 @@ namespace BifrostApi.Controllers
         [RequiredPermission("PropertyAdmin")]
         public async Task<ActionResult> PropertyCreate(string name)
         {
-            // TODO: THIS REQUIRES HIGH PRIVILEDGES TO ADD (SUPERUSER)
 
             PermissionProperty property = new PermissionProperty
             {
@@ -146,7 +145,6 @@ namespace BifrostApi.Controllers
         [RequireHierarchy("groupUid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public async Task<ActionResult> GroupCreate(Guid groupUid, Guid permissionUid)
         {
-            // TODO: ONLY GIVE PERMISSIONS THAT ARE NON RESTRICTED AND IS FOR A GROUP LOWER IN THE HIERARCHY
 
             GroupPermission permission = new GroupPermission
             {
@@ -165,7 +163,6 @@ namespace BifrostApi.Controllers
         [RequireHierarchy("groupUid", false, RequireHierarchyAttribute.HierarchySearchType.Usergroup)]
         public async Task<ActionResult> GroupDelete(Guid groupUid, Guid permissionUid)
         {
-            // TODO: HIERARCHY CHECK, 
 
             List<GroupPermission> permission = _context.GroupPermissions.Where(x => x.GroupUid == groupUid && x.PermissionPropertyUid == permissionUid).ToList();
 
