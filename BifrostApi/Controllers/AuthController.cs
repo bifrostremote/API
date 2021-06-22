@@ -69,7 +69,7 @@ namespace BifrostApi.Controllers
                 return Ok(user.Id);
             }
 
-            return Forbid("user not authenticated");
+            return Unauthorized("Username or password was incorrect");
         }
     }
 }
