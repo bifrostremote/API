@@ -108,7 +108,7 @@ namespace BifrostApi.Controllers
         [HttpGet]
         [QueryRouteSelector("username", true)]
         [QueryRouteSelector("userUid", false)]
-        [ApiExplorerSettings(IgnoreApi = true)] // Hide search from swagger to avoid ambiguous  
+        [ApiExplorerSettings(IgnoreApi = true)] // Hide search from swagger to avoid ambiguous exceptions 
         public async Task<ActionResult> Search(string username)
         {
 

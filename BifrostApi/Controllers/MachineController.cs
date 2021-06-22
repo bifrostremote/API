@@ -26,12 +26,13 @@ namespace BifrostApi.Controllers
         [HttpGet]
         [QueryRouteSelector("userUid", false)]
         [QueryRouteSelector("machineUid", true)]
+        [ApiExplorerSettings(IgnoreApi = true)] // Hide search from swagger to avoid ambiguous exceptions 
         public ActionResult GetMachine(Guid machineUid){
             return Ok();
         }
 
         [HttpPost]
-        public ActionResult InsertMachine([FromBody]MachineCreateDTO machine)
+        public async Task<ActionResult> InsertMachine([FromBody]MachineCreateDTO machine)
         {
 
             if (machine.Name == "")
@@ -51,22 +52,27 @@ namespace BifrostApi.Controllers
             IPAddress address = null;
             IPAddress.TryParse(machine.IPAddress, out address);
 
+            int matchingIps = _context.Machines.Where(x => x.Ip == machine.IPAddress).Count();
+
+            if (matchingIps > 0)
+                return BadRequest("Machine already exists on that IP");
+
             if (address == null)
                 return BadRequest("IP Address is not valid");
 
 
             Machine inserted = new Machine
             {
+                Uid = Guid.NewGuid(),
                 Name = machine.Name,
                 UserUid = machine.UserUid,
                 Deleted = false,
                 Ip = address.ToString(),
                 LastOnline = (int)DateTimeOffset.Now.ToUnixTimeSeconds()
-                
             };
 
             _context.Machines.Add(inserted);
-            _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return Ok(inserted.Uid);
 
